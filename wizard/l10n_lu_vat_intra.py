@@ -30,58 +30,13 @@ from openerp.tools.translate import _
 from openerp.report import report_sxw
 
 
-class partner_vat_intra(osv.osv_memory):
+class partner_vat_intra_lu(osv.osv_memory):
     """
     Partner Vat Intra
     """
-    _name = "partner.vat.intra"
-    _description = 'Partner VAT Intra'
+    _inherit = "partner.vat.intra"
 
-    def _get_xml_data(self, cr, uid, context=None):
-        if context.get('file_save', False):
-            return base64.encodestring(context['file_save'].encode('utf8'))
-        return ''
-
-    def _get_europe_country(self, cursor, user, context=None):
-        return self.pool.get('res.country').search(cursor, user, [('code', 'in', ['AT', 'BG', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE', 'GB'])])
-
-    _columns = {
-        'name': fields.char('File Name'),
-        'period_code': fields.char('Period Code', size=6, required=True, help='''This is where you have to set the period code for the intracom declaration using the format: ppyyyy
-      PP can stand for a month: from '01' to '12'.
-      PP can stand for a trimester: '31','32','33','34'
-          The first figure means that it is a trimester,
-          The second figure identify the trimester.
-      PP can stand for a complete fiscal year: '00'.
-      YYYY stands for the year (4 positions).
-    '''
-    ),
-        'period_ids': fields.many2many('account.period', 'account_period_rel', 'acc_id', 'period_id', 'Period (s)', help = 'Select here the period(s) you want to include in your intracom declaration'),
-        'tax_code_id': fields.many2one('account.tax.code', 'Company', domain=[('parent_id', '=', False)], help="Keep empty to use the user's company", required=True),
-        'test_xml': fields.boolean('Test XML file', help="Sets the XML output as test file"),
-        'mand_id' : fields.char('Reference', help="Reference given by the Representative of the sending company."),
-        'msg': fields.text('File created', readonly=True),
-        'no_vat': fields.text('Partner With No VAT', readonly=True, help="The Partner whose VAT number is not defined and they are not included in XML File."),
-        'file_save' : fields.binary('Save File', readonly=True),
-        'country_ids': fields.many2many('res.country', 'vat_country_rel', 'vat_id', 'country_id', 'European Countries'),
-        'comments': fields.text('Comments'),
-        }
-
-    def _get_tax_code(self, cr, uid, context=None):
-        obj_tax_code = self.pool.get('account.tax.code')
-        obj_user = self.pool.get('res.users')
-        company_id = obj_user.browse(cr, uid, uid, context=context).company_id.id
-        tax_code_ids = obj_tax_code.search(cr, uid, [('company_id', '=', company_id), ('parent_id', '=', False)], context=context)
-        return tax_code_ids and tax_code_ids[0] or False
-
-    _defaults = {
-        'country_ids': _get_europe_country,
-        'file_save': _get_xml_data,
-        'name': 'vat_intra.xml',
-        'tax_code_id': _get_tax_code,
-    }
-
-    def _get_datas(self, cr, uid, ids, context=None):
+    def _get_datas_lu(self, cr, uid, ids, context=None):
         """Collects require data for vat intra xml
         :param ids: id of wizard.
         :return: dict of all data to be used to generate xml for Partner VAT Intra.
@@ -213,13 +168,13 @@ class partner_vat_intra(osv.osv_memory):
         xmldict.update({'dnum': dnum, 'clientnbr': str(seq), 'amountsum': round(amount_sum,2), 'partner_wo_vat': p_count})
         return xmldict
 
-    def create_xml(self, cursor, user, ids, context=None):
+    def create_xml_lu(self, cursor, user, ids, context=None):
         """Creates xml that is to be exported and sent to estate for partner vat intra.
         :return: Value for next action.
         :rtype: dict
         """
         mod_obj = self.pool.get('ir.model.data')
-        xml_data = self._get_datas(cursor, user, ids, context=context)
+        xml_data = self._get_datas_lu(cursor, user, ids, context=context)
         month_quarter = xml_data['period'][:2]
         year = xml_data['period'][2:]
         data_file = ''
@@ -274,8 +229,8 @@ class partner_vat_intra(osv.osv_memory):
             'target': 'new',
         }
 
-    def preview(self, cr, uid, ids, context=None):
-        xml_data = self._get_datas(cr, uid, ids, context=context)
+    def preview_lu(self, cr, uid, ids, context=None):
+        xml_data = self._get_datas_lu(cr, uid, ids, context=context)
         datas = {
              'ids': [],
              'model': 'partner.vat.intra',
@@ -286,18 +241,15 @@ class partner_vat_intra(osv.osv_memory):
         )
 
 
-class vat_intra_print(report_sxw.rml_parse):
+class vat_intra_print_lu(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
-        super(vat_intra_print, self).__init__(cr, uid, name, context=context)
+        super(vat_intra_print_lu, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
         })
 
-
-class wrapped_vat_intra_print(osv.AbstractModel):
+class wrapped_vat_intra_print_lu(osv.AbstractModel):
     _name = 'report.l10n_lu_improvements.report_l10nvatintraprint'
     _inherit = 'report.abstract_report'
     _template = 'l10n_lu_improvements.report_l10nvatintraprint'
-    _wrapped_report_class = vat_intra_print
-
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+    _wrapped_report_class = vat_intra_print_lu

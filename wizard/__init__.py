@@ -1,1 +1,1 @@
-﻿import l10n_be_vat_intra
+﻿import l10n_lu_vat_intra

@@ -19,8 +19,8 @@
         'l10n_lu_ext',
     ],
     'data': [
-        'wizard/l10n_be_vat_intra_view.xml',
-        'view/l10n_be_reports.xml',
+        'wizard/l10n_lu_vat_intra_view.xml',
+        'view/l10n_lu_reports.xml',
         'view/report_vatintraprint.xml',
     ],
     'installable': True,
