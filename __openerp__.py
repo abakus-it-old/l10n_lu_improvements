@@ -1,6 +1,6 @@
 ﻿{
     'name': 'Luxembourg - Accounting improvements (AbAKUS)',
-    'version': '1.1',
+    'version': '9.0.1.0',
     'category': 'Accounting',
     'description': 
     """
